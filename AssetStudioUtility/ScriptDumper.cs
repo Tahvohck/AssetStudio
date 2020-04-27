@@ -96,7 +96,7 @@ namespace AssetStudio
             return sb;
         }
 
-        private static void DumpType(TypeSig typeSig, StringBuilder sb, ObjectReader reader, string name, int indent, bool isRoot = false, bool align = true)
+        private static void DumpType(TypeSig typeSig, StringBuilder sb, ObjectReader reader, string name, int indent, bool isRoot = false, bool align = true, bool isArray = false)
         {
             var typeDef = typeSig.ToTypeDefOrRef().ResolveTypeDefThrow();
             if (typeSig.IsPrimitive)
@@ -141,7 +141,7 @@ namespace AssetStudio
                         value = reader.ReadChar();
                         break;
                 }
-                if (align)
+                if (align && !isArray)
                     reader.AlignStream();
                 sb.AppendLine($"{new string('\t', indent)}{typeDef.Name} {name} = {value}");
                 return;
@@ -171,7 +171,11 @@ namespace AssetStudio
                 for (int i = 0; i < size; i++)
                 {
                     sb.AppendLine($"{new string('\t', indent + 2)}[{i}]");
-                    DumpType(typeDef.ToTypeSig(), sb, reader, "data", indent + 2);
+                    DumpType(typeDef.ToTypeSig(), sb, reader, "data", indent + 2, false, true, true);
+                }
+                if (align)
+                {
+                    reader.AlignStream();
                 }
                 return;
             }
@@ -330,6 +334,7 @@ namespace AssetStudio
                 sb.AppendLine($"{prefix}int z = {reader.ReadInt32()}");
                 return;
             }
+
             if (typeDef.IsClass || typeDef.IsValueType)
             {
                 if (name != null && indent != -1)
